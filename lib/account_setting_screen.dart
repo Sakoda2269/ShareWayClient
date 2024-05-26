@@ -165,5 +165,4 @@ class AccountSettingScreenState extends State<AccountSettingScreen>{
       )
     );
   }
-
 }
