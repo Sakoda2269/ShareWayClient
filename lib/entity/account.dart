@@ -18,4 +18,11 @@ class Account{
     email = json["email"].toString();
     introduction = json["introduction"].toString();
   }
+
+  void fromJson(Map<String, dynamic> json){
+    accountName = json["accountName"].toString();
+    accountId = json["accountId"].toString();
+    email = json["email"].toString();
+    introduction = json["introduction"].toString();
+  }
 }

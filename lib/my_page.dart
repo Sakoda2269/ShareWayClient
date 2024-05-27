@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
@@ -10,6 +11,8 @@ import 'entity/account.dart';
 import 'entity/manual.dart';
 import 'main.dart';
 import 'manual_view.dart';
+
+import 'dart:io';
 
 class MyPageScreen extends StatefulWidget{
 
@@ -28,14 +31,17 @@ class MyPageScreen extends StatefulWidget{
 
 class MyPageState extends State<MyPageScreen>{
 
-  Account? account;
+  late Account account;
   List<Manual> manuals = [];
 
+  Uint8List? image;
+
   @override
-  void initState(){
-    debugPrint("aaa");
+  void initState() {
+    account = Account("","","","", widget.token);
     getAccountInfo();
     getManuals();
+    getImage();
   }
 
   @override
@@ -45,7 +51,7 @@ class MyPageState extends State<MyPageScreen>{
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text("${account?.accountName}'s Page"),
         actions: [IconButton(onPressed: () async {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => AccountSettingScreen(widget.token, account)));
+          await Navigator.push(context, MaterialPageRoute(builder: (context) => AccountSettingScreen(widget.token, account, image)));
           resend();
         }, icon: const Icon(Icons.settings))]
       ),
@@ -75,20 +81,21 @@ class MyPageState extends State<MyPageScreen>{
     );
   }
 
-  void resend(){
-    getAccountInfo();
-    getManuals();
+  void resend() async {
+    await getAccountInfo();
+    await getImage();
+    await getManuals();
   }
 
-  void getAccountInfo() async{
+  Future getAccountInfo() async{
     var response = await http.get(Uri.parse("${MyApp.address}/accounts/${widget.accountId}"));
     var data = json.decode(utf8.decode(response.bodyBytes));
     setState(() {
-      account = Account.fromJson(data, widget.token);
+      account.fromJson(data);
     });
   }
 
-  void getManuals() async{
+  Future getManuals() async{
     var response = await http.get(
       Uri.parse("${MyApp.address}/accounts/${widget.accountId}/manuals"),
       headers: {"Authorization": widget.token},
@@ -104,6 +111,13 @@ class MyPageState extends State<MyPageScreen>{
     });
   }
 
+  Future getImage() async {
+    var response = await http.get(Uri.parse("${MyApp.address}/accounts/${widget.accountId}/icon"));
+    setState(() {
+      image = response.bodyBytes;
+    });
+  }
+
   Widget circle(){
     return Container(
       width: 80,
@@ -112,7 +126,19 @@ class MyPageState extends State<MyPageScreen>{
         shape: BoxShape.circle,
         color: Colors.yellow
       ),
+      child: imageFile(),
     );
+  }
+
+  Widget? imageFile(){
+    if(image != null){
+      return CircleAvatar(
+        backgroundColor: Colors.blue,
+        backgroundImage: MemoryImage(image!),
+      );
+    }else{
+      return null;
+    }
   }
 
   List<Widget> manualShow(List<Manual> manuals, context){

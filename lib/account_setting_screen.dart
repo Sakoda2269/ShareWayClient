@@ -1,7 +1,9 @@
+import 'dart:typed_data';
 import 'dart:ui';
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'entity/account.dart';
@@ -14,8 +16,9 @@ class AccountSettingScreen extends StatefulWidget{
 
   String token;
   Account? account;
+  Uint8List? image;
 
-  AccountSettingScreen(this.token,this.account, {super.key});
+  AccountSettingScreen(this.token,this.account, this.image, {super.key});
 
   @override
   State<StatefulWidget> createState() {
@@ -29,13 +32,15 @@ class AccountSettingScreenState extends State<AccountSettingScreen>{
   TextEditingController nameController = TextEditingController();
   TextEditingController introController = TextEditingController();
 
-  late File _file;
+  Uint8List? image;
+  File? _file;
   final _picker = ImagePicker();
 
   @override
   void initState(){
     nameController.text = widget.account!.accountName;
     introController.text = widget.account!.introduction;
+    image = widget.image;
   }
 
   @override
@@ -67,6 +72,7 @@ class AccountSettingScreenState extends State<AccountSettingScreen>{
       headers: {"Authorization": widget.token},
       body: {"account_name": nameController.text, "introduction": introController.text}
     );
+    await sendImage();
     Navigator.pop(context);
   }
 
@@ -75,14 +81,17 @@ class AccountSettingScreenState extends State<AccountSettingScreen>{
       child:Stack(
         children: [
           Container(),
-          Center(child: Container(
-            width: 100,
-            height: 100,
-            decoration: const BoxDecoration(
+          Center(
+            child: Container(
+              width: 100,
+              height: 100,
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.yellow
-            ),
-          )),
+              ),
+              child: imageFile(),
+            )
+          ),
           Positioned(
             top: 70,
             left: 200,
@@ -90,7 +99,6 @@ class AccountSettingScreenState extends State<AccountSettingScreen>{
               onPressed: () async {
                 await selectImage();
                 await _cropImage();
-                await sendImage();
               },
               style: ElevatedButton.styleFrom(
                 shape: const CircleBorder(
@@ -127,9 +135,13 @@ class AccountSettingScreenState extends State<AccountSettingScreen>{
         CropAspectRatioPreset.square,
       ],
     );
-    setState(() {
-      _file = File(croppedFile!.path);
-    });
+    if(croppedFile != null){
+      var tmpImage = await croppedFile.readAsBytes();
+      setState(() {
+        _file= File(croppedFile.path);
+        image = tmpImage;
+      });
+    }
   }
 
   Future sendImage() async {
@@ -137,10 +149,21 @@ class AccountSettingScreenState extends State<AccountSettingScreen>{
       "PUT",
       Uri.parse("${MyApp.address}/accounts/${widget.account!.accountId}/icon"),
     );
-    request.files.add(http.MultipartFile.fromBytes("new_icon", _file.readAsBytesSync()));
+    request.files.add(http.MultipartFile.fromBytes("new_icon", _file!.readAsBytesSync()));
     request.headers["Authorization"] = widget.token;
     final res = await request.send();
     debugPrint(res.statusCode.toString());
+  }
+
+  Widget? imageFile(){
+    if(image != null){
+      return CircleAvatar(
+        backgroundColor: Colors.blue,
+        backgroundImage: MemoryImage(image!),
+      );
+    }else{
+      return null;
+    }
   }
 
   Widget nameField(){
