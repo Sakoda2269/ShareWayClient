@@ -1,6 +1,7 @@
 
 
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:share_way/entity/step.dart';
 
@@ -11,6 +12,7 @@ class Manual{
   String accountId;
   String accountName;
   List<Step> steps = [];
+  Uint8List? thumbnail;
 
   Manual(this.manualId, this.title, this.accountId, this.accountName);
 
@@ -19,6 +21,7 @@ class Manual{
     String? titleJson = jsonMap["title"];
     String? accountIdJson = jsonMap["accountId"];
     String? accountNameJson = jsonMap["accountName"];
+    String? thumbnailJson = jsonMap["thumbnail"];
     if(titleJson != null){
       title = titleJson;
     }
@@ -27,6 +30,9 @@ class Manual{
     }
     if(accountNameJson != null){
       accountName = accountNameJson;
+    }
+    if(thumbnailJson != null){
+      thumbnail = base64Decode(thumbnailJson);
     }
     List<dynamic> a = jsonMap["steps"];
     for(Map<String, dynamic> item in a){

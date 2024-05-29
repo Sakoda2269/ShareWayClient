@@ -38,7 +38,7 @@ class MyPageState extends State<MyPageScreen>{
 
   @override
   void initState() {
-    account = Account("","","","", widget.token);
+    account = Account("","","", "", "");
     getAccountInfo();
     getManuals();
     getImage();
@@ -46,30 +46,24 @@ class MyPageState extends State<MyPageScreen>{
 
   @override
   Widget build(BuildContext context) {
+
+    List<Widget> screen = accountInfo();
+    screen.add(Flexible(
+        child: ListView(
+            children:manualShow(manuals, context)
+        )
+      )
+    );
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text("${account?.accountName}'s Page"),
-        actions: [IconButton(onPressed: () async {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => AccountSettingScreen(widget.token, account, image)));
-          resend();
-        }, icon: const Icon(Icons.settings))]
+        actions: settingButton()
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children:[
-          const SizedBox(height: 30,),
-          Padding(padding: const EdgeInsets.only(left: 10),child: circle(),),
-          const SizedBox(height: 10,),
-          Padding(padding: const EdgeInsets.only(left: 20),child: Text(account!.accountName, style: const TextStyle(fontSize: 20),),),
-          Padding(padding: const EdgeInsets.only(left: 20),child: Text(account!.introduction)),
-          const SizedBox(height: 10,),
-          Flexible(
-            child: ListView(
-              children:manualShow(manuals, context)
-            )
-          )
-        ]
+        children:screen
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
@@ -79,6 +73,27 @@ class MyPageState extends State<MyPageScreen>{
         }
       ),
     );
+  }
+
+  List<Widget> accountInfo(){
+    return [
+      const SizedBox(height: 30,),
+      Padding(padding: const EdgeInsets.only(left: 10),child: circle(),),
+      const SizedBox(height: 10,),
+      Padding(padding: const EdgeInsets.only(left: 20),child: Text(account!.accountName, style: const TextStyle(fontSize: 20),),),
+      Padding(padding: const EdgeInsets.only(left: 20),child: Text(account!.introduction)),
+      const SizedBox(height: 10,),
+    ];
+  }
+
+  List<Widget>? settingButton(){
+    if(widget.accountId == account.accountId){
+      return [IconButton(onPressed: () async {
+        await Navigator.push(context, MaterialPageRoute(builder: (context) => AccountSettingScreen(widget.token, account, image)));
+        resend();
+      }, icon: const Icon(Icons.settings))];
+    }
+    return null;
   }
 
   void resend() async {
@@ -141,12 +156,31 @@ class MyPageState extends State<MyPageScreen>{
     }
   }
 
+  Widget thumbnailFile(Uint8List? image){
+    if(image != null){
+      return Image.memory(image);
+    }else{
+      return Container();
+    }
+  }
+
   List<Widget> manualShow(List<Manual> manuals, context){
     List<Widget> res = [];
     for(Manual manual in manuals){
-      res.add(Card(child: ListTile(title: Text(manual.title), onTap: (){
-        Navigator.push(context, MaterialPageRoute(builder: (context) => ManualScreen(manual)));
-      })));
+      res.add(Card(
+          child: ListTile(
+            title: Column(
+              children: [
+                Text(manual.title),
+                thumbnailFile(manual.thumbnail),
+              ],
+            ),
+            onTap: (){
+              Navigator.push(context, MaterialPageRoute(builder: (context) => ManualScreen(manual)));
+            }
+          )
+        )
+      );
     }
     return res;
   }

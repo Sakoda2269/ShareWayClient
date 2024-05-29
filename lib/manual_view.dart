@@ -1,5 +1,7 @@
 
 
+import 'dart:typed_data';
+
 import 'package:expandable/expandable.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -51,16 +53,28 @@ class ManualState extends State<ManualScreen>{
               ),
               collapsed: Container(),
               expanded:
-              Padding(
-                padding:const EdgeInsets.only(left: 30),
-                child:
-                Text("\n${step.detail}\n", style: const TextStyle(fontSize: 16), )
-              ),
+                Column(
+                  children: [
+                    thumbnailFile(step.image),
+                    Padding(
+                      padding:const EdgeInsets.only(left: 30),
+                      child: Text("\n${step.detail}\n", style: const TextStyle(fontSize: 16), )
+                    ),
+                  ],
+                )
             ),
           ),
       );
     }
     return res;
   }
+  Widget thumbnailFile(Uint8List? image){
+    if(image != null){
+      return Image.memory(image);
+    }else{
+      return Container();
+    }
+  }
+
   
 }
